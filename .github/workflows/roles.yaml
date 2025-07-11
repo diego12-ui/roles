@@ -1,0 +1,94 @@
+name: Azure Role Assignment Script
+
+on:
+  workflow_dispatch:
+    inputs:
+      principalType:
+        description: 'Tipo de principal (Security Group, Service Principal, Managed Identity, User)'
+        required: true
+        default: 'Security Group'
+      principalName:
+        description: 'Nombre del principal'
+        required: true
+      scopeType:
+        description: 'Tipo de scope (Management Group, Subscription, Resource Group, Resource)'
+        required: true
+        default: 'Subscription'
+      managementGroup:
+        description: 'Nombre del Management Group (si aplica)'
+        required: false
+      subscriptionName:
+        description: 'Nombre de la suscripción (si aplica)'
+        required: false
+      resourceGroupName:
+        description: 'Nombre del Resource Group (si aplica)'
+        required: false
+      resourceType:
+        description: 'Tipo de recurso (si aplica)'
+        required: false
+      resourceName:
+        description: 'Nombre del recurso (si aplica)'
+        required: false
+      roleName:
+        description: 'Nombre del rol'
+        required: true
+      codapp:
+        description: 'Código de la aplicación'
+        required: true
+      grupodered:
+        description: 'Nombre del grupo de red'
+        required: true
+      ambiente:
+        description: 'Ambiente (Desarrollo, Certificación, Producción)'
+        required: true
+        default: 'Producción'
+      assignmentType:
+        description: 'Tipo de asignación (Permanente, Temporal)'
+        required: true
+        default: 'Permanente'
+      startTime:
+        description: 'Fecha/hora de inicio (yyyy-MM-dd HH:mm, solo si es temporal)'
+        required: false
+      endTime:
+        description: 'Fecha/hora de fin (yyyy-MM-dd HH:mm, solo si es temporal)'
+        required: false
+
+jobs:
+  run-ps1:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Instalar módulo Az
+        run: |
+          Install-Module -Name Az -Force -Scope CurrentUser -AllowClobber
+        shell: pwsh
+
+      - name: Login to Azure (Service Principal)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Ejecutar script PowerShell
+        run: |
+          pwsh ./roles-yaml.ps1 `
+            -principalType "${{ github.event.inputs.principalType }}" `
+            -principalName "${{ github.event.inputs.principalName }}" `
+            -scopeType "${{ github.event.inputs.scopeType }}" `
+            -managementGroup "${{ github.event.inputs.managementGroup }}" `
+            -subscriptionName "${{ github.event.inputs.subscriptionName }}" `
+            -resourceGroupName "${{ github.event.inputs.resourceGroupName }}" `
+            -resourceType "${{ github.event.inputs.resourceType }}" `
+            -resourceName "${{ github.event.inputs.resourceName }}" `
+            -roleName "${{ github.event.inputs.roleName }}" `
+            -codapp "${{ github.event.inputs.codapp }}" `
+            -grupodered "${{ github.event.inputs.grupodered }}" `
+            -ambiente "${{ github.event.inputs.ambiente }}" `
+            -assignmentType "${{ github.event.inputs.assignmentType }}" `
+            -startTime "${{ github.event.inputs.startTime }}" `
+            -endTime "${{ github.event.inputs.endTime }}"
+        shell: pwsh

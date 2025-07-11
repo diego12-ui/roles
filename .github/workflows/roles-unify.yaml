@@ -1,0 +1,24 @@
+name: Ejecutar roles-unify.ps1
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-powershell-script:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Login to Azure (Service Principal)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Ejecutar roles-unify.ps1
+        shell: pwsh
+        run: |
+          ./roles-unify.ps1
